@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.CustomerMapper" >
+  
+    <sql id="Base_Column_List" >
+    id, name, mobile, linkman, tel, address, role_type, bank_card_name, bank_card_no, 
+    bank_card_branch, withdraw_amount, withdraw_balance, is_active, create_time, creator_role, 
+    creator_id, update_time, updater_role, updater_id
+  </sql>
+  
+  <select id="getById" resultType="cn.imexue.ec.common.model.Customer">
+    select 
+    <include refid="Base_Column_List" />
+    from t_customer
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  
+</mapper>

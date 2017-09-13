@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.LoginMapper" >
+  
+  <sql id="baseColumn">
+  	t.id,t.mobile,t.password,t.name,t.sex,t.birthday,t.logo_url,
+  	t.has_login,t.is_active,t.version_no,m.school_id
+  </sql>
+  
+  <select id="login" resultType="teachervo">
+  	select <include refid="baseColumn"/>
+  	,m.role
+  	from t_teacher t
+  	left join t_teacher_school_map m on t.id= m.teacher_id
+  	where t.mobile=#{username}
+  	limit 1
+  </select>
+  
+</mapper>

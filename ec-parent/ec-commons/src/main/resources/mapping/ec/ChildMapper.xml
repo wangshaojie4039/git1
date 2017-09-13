@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.ChildMapper" >
+  
+  <sql id="baseColumn">
+  c.id,c.school_id,c.class_id,c.name,c.logo_url,c.id_card_no
+  ,c.sex,c.birthday,c.version_no
+  </sql>
+  
+  <select id="pageList" resultType="childvo">
+  select <include refid="baseColumn"/>,s.name class_name
+  ,IFNULL(cardNum,0) cardNum
+  from t_child c 
+  left join t_class s on c.class_id = s.id and s.is_graduate=0 and s.is_delete = 0
+  <if test="teacherId != null">
+  left join t_class_teacher_map ctm on ctm.class_id=s.id
+  </if>
+  left join (
+  select count(*) cardNum,user_id child_id from t_card where user_type = 'C' group by user_id
+  ) ca on ca.child_id = c.id
+  where c.is_graduate = 0 and c.is_delete = 0
+  and c.school_id = #{schoolId}
+  <if test="classId != null">
+	and c.class_id = #{classId}
+  </if>
+  <if test="teacherId != null">
+  and ctm.teacher_id = #{teacherId}
+  </if>
+  <if test="name != null">
+    and c.name like concat('%',#{name},'%')
+  </if>
+  <if test="orderBy != null">
+  ORDER BY c.${orderBy} ${orderType}
+  </if>
+  </select>
+  
+  
+  
+  <select id="selectChildList" resultType="ChildVo">
+  select <include refid="baseColumn"/> , cs.name className , c.id childId
+  from t_child c 
+  left join t_class cs on c.class_id = cs.id
+  where c.school_id = #{schoolId}
+  <if test="name != null">
+    and c.name like concat('%',#{name},'%')
+  </if>
+  and c.is_graduate=0
+  and c.is_delete=0
+  and cs.is_graduate=0
+  and cs.is_delete=0
+  </select>
+  
+  <delete id="deleteByClass">
+  delete from t_child
+  where class_id = #{classId}
+  and is_graduate = 0
+  </delete>
+  
+  <delete id="deleteRelationShip">
+  delete from t_child_parent_map 
+  where class_id = #{classId}
+  </delete>
+  
+  <update id="graduateChildren">
+  update t_child set 
+  is_graduate = 1
+  ,graduate_time = #{updateTime}
+  ,update_time = #{updateTime}
+  ,updater_role = #{updaterRole}
+  ,updater_id = #{updaterId}
+  ,version_no = version_no+1
+  where class_id = #{classId}
+  </update>
+  
+  <select id="getChild" resultType="ChildVo">
+  select <include refid="baseColumn"/>
+  from t_child c
+  where c.id = #{childId} and c.school_id = #{schoolId}
+  and is_graduate =0 and is_delete = 0
+  </select>
+  
+  <insert id="insert" keyProperty="id">
+  insert t_child 
+  (school_id,class_id,name,logo_url,sex,birthday,id_card_no,create_time,creator_role,creator_id)
+  values
+  (#{schoolId},#{classId},#{name},#{logoUrl},#{sex},#{birthday},#{idCardNo}
+  ,#{createTime},#{creatorRole},#{creatorId})
+  </insert>
+  
+  <update id="update">
+  update t_child set
+  version_no = version_no + 1,
+  name = #{name},
+  logo_url = #{logoUrl},
+  <if test="sex != null">
+  sex = #{sex},
+  </if>
+  birthday = #{birthday},
+  class_id = #{classId},
+  id_card_no = #{idCardNo}
+  where version_no = #{versionNo}
+  and id = #{id}
+  </update>
+  
+  <select id="getByNameAndClass" resultType="ChildVo">
+  select <include refid="baseColumn"/>,tc.name class_name
+  from t_child c
+  left join t_class tc on tc.id = c.class_id
+  where c.name = #{name} and c.class_id = #{classId}
+  and c.is_graduate =0 and c.is_delete = 0
+  </select>
+  
+  <delete id="deleteChild">
+  delete from t_child
+  where id = #{id}
+  </delete>
+  
+  <delete id="deleteRelationShipByChild">
+  delete from t_child_parent_map
+  where child_id = #{childId}
+  </delete>
+  
+  <select id="getByParent" resultType="childvo">
+  select <include refid="baseColumn"/> ,cpm.relation_code , cpm.relation_name,cs.name class_name
+  from t_child c
+  left join t_child_parent_map cpm on cpm.child_id = c.id
+  left join t_class cs on c.class_id = cs.id
+  where c.is_graduate =0 and c.is_delete = 0
+  <if test="schoolId != null">
+  and c.school_id = #{schoolId}
+  </if>
+  and cpm.parent_id = #{parentId}
+  </select>
+  
+  <!-- 获取学校的学生id-name列表(已经乘车和未乘车) -->
+  <select id="selecChildByClassId" resultType="ChildRideExtVo">
+	  select  	c.id,xcc.id xcChildID, c.NAME  ,if(xcc.child_id=c.id and xcc.line_id= #{lineId},'1','0') hasExit
+	  from t_child c
+	  LEFT JOIN t_xc_child  xcc on xcc.child_id=c.id 
+	  where c.is_graduate =0 and c.is_delete = 0
+	  <if test="schoolId != null">
+	  and c.school_id = #{schoolId}
+	  </if>
+  	  <if test="classIds != null and classIds.size() >0">
+ 	  and  c.class_id in
+	  <foreach item="item"   collection="classIds" open="(" separator="," close=")">  
+		  #{item,jdbcType=BIGINT}  
+	 </foreach>
+	  </if>
+  </select>
+  <select id="selectById" resultType="ChildVo">
+    select 
+    <include refid="Base_Column_List" />
+    from t_child
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  
+  <select id="selectRelationShipByClassId" resultType="cn.imexue.ec.common.model.ChildParentMap">
+  	 select 
+  	 *
+  	 from t_child_parent_map
+  	 where class_id=#{classId,jdbcType=BIGINT}
+  </select>
+  <select id="selectRelationShipByCPId" resultType="cn.imexue.ec.common.model.ChildParentMap">
+  	select
+	*
+	from t_child_parent_map
+	where parent_id=#{parentId,jdbcType=BIGINT} and child_id=#{childId,jdbcType=BIGINT}
+	LIMIT 1
+  </select>
+  
+  
+  <sql id="Base_Column_List" >
+    id, school_id, class_id, name, logo_url, sex, birthday, id_card_no, is_graduate, 
+    graduate_time, is_delete, delete_time, create_time, creator_role, creator_id, update_time, 
+    updater_role, updater_id,version_no
+  </sql>
+</mapper>

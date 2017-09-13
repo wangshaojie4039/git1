@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.RecipeMapper" >
+  
+  <sql id="baseColumn">
+  	r.id,r.recipe_id,r.item_type,r.recipe_img,r.item1,r.item2,r.item3,r.item4
+  	,r.item5,r.item6,r.version_no
+  </sql>
+  
+  <select id="getRecipeItems" resultType="recipeitemvo">
+  	select <include refid="baseColumn"/>,re.recipe_date
+  	from t_recipe_item r
+  	left join t_recipe re on r.recipe_id = re.id
+  	where school_id = #{schoolId}
+  	and recipe_date >= date_format(#{start},'%Y%m%d')
+  	and recipe_date &lt; date_format(date_add(#{start},interval 7 day),'%Y%m%d')
+  	<if test="type != null">
+  	and item_type in (
+  	<foreach collection="type" item="t" separator=",">
+  	 #{t}
+  	</foreach>
+  	)
+  	</if>
+  </select>
+  
+  <select id="getRecipeItemsById" resultType="recipeitemvo">
+  select <include refid="baseColumn"/>,re.recipe_date
+  from t_recipe_item r
+  left join t_recipe re on r.recipe_id = re.id
+  where r.id = #{id}
+  </select>
+  
+  <select id="getRecipeItemByDate" resultType="recipeitemvo">
+  select <include refid="baseColumn"/>,re.recipe_date
+  from t_recipe_item r
+  left join t_recipe re on r.recipe_id = re.id
+  where date_format(re.recipe_date ,'%Y%m%d') = date_format(#{date} ,'%Y%m%d')
+  and school_id = #{schoolId} and item_type = #{type}
+  </select>
+  
+  <insert id="insert">
+  insert into t_recipe_item
+  (recipe_id,item_type,recipe_img,item1,item2,item3,item4,item5,item6,create_time
+  ,creator_role,creator_id)
+  values
+  (#{recipeId},#{itemType},#{recipeImg},#{item1},#{item2},#{item3},#{item4},#{item5},#{item6},#{createTime}
+  ,#{creatorRole},#{creatorId})
+  </insert>
+  
+  <update id="update">
+  update t_recipe_item set 
+  version_no = version_no+1
+  ,recipe_img = #{recipeImg}
+  ,item1 = #{item1}
+  ,item2 = #{item2}
+  ,item3 = #{item3}
+  ,item4 = #{item4}
+  ,item5 = #{item5}
+  ,item6 = #{item6}
+  ,update_time = #{updateTime}
+  ,updater_role = #{updaterRole}
+  ,updater_id = #{updaterId}
+  where id = #{id}
+  and version_no = #{versionNo}
+  </update>
+  
+  <delete id="delete">
+  delete from t_recipe_item 
+  where 1=1
+  <if test="id != null">
+  and id = #{id}
+  </if>
+  <if test="id == null">
+  and item_type = #{itemType}
+  and recipe_id = #{recipeId}
+  </if>
+  </delete>
+  
+  <delete id="deleteItemByRecipe">
+   delete from t_recipe_item 
+   where recipe_id = #{recipeId}
+  </delete>
+  
+  
+  <!--  -->
+  <select id="getRecipe" resultType="recipe">
+  select id ,school_id ,recipe_date from t_recipe
+  where date_format(recipe_date ,'%Y%m%d') = date_format(#{date} ,'%Y%m%d')
+   and school_id = #{schoolId}
+  </select>
+  
+  <insert id="insertRecipe" keyProperty="id">
+  insert into t_recipe
+  (school_id , recipe_date , create_time , creator_role,creator_id)
+  values
+  (#{schoolId},#{recipeDate},#{createTime},#{creatorRole},#{creatorId})
+  </insert>
+  
+</mapper>

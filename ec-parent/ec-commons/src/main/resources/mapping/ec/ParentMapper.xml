@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.ParentMapper" >
+  
+  <sql id="baseColumn">
+  	p.id,p.mobile,p.name,p.logo_url,p.sex,p.birthday,
+  	p.has_login,p.is_active,p.version_no,p.create_time
+  </sql>
+  
+  <select id="getParentByChild" resultType="ParentVo">
+  	select <include refid="baseColumn"/>,cpm.`relation_code`,cpm.`relation_name`,cpm.is_default
+	FROM `t_parent` p 
+	LEFT JOIN `t_child_parent_map` cpm ON cpm.`parent_id` = p.`id`
+	WHERE p.`is_active`=1 AND cpm.`child_id`=#{childId}
+  </select>
+  
+  <delete id="deleteParentChild">
+  delete from t_child_parent_map 
+  where parent_id = #{parentId}
+  AND child_id = #{childId}
+  </delete>
+  
+  <select id="getParentByMobile" resultType="ParentVo">
+  SELECT <include refid="baseColumn"/>
+  FROM `t_parent` p 
+  WHERE p.mobile = #{mobile}
+  </select>
+  
+  <insert id="insertParent" keyProperty="id">
+  insert t_parent
+  (mobile,uid,uuid,password,name,sex,is_active,create_time,creator_role,creator_id)
+  values
+  (#{mobile},#{uid},#{uuid},#{password},#{name},#{sex},1,
+  #{createTime},#{creatorRole},#{creatorId})
+  </insert>
+  
+  <update id="updateParent">
+  update t_parent
+  set name = #{name}
+  ,version_no = version_no +1
+  where id = #{id}
+  and version_no = #{versionNo}
+  </update>
+  
+  <update id="updateParentChild">
+  update t_child_parent_map
+  set relation_code =#{relationCode}
+  ,relation_name = #{relationName}
+  <if test="isDefault != null">
+  , is_default = #{isDefault}
+  </if>
+  where child_id=#{childId}
+  and parent_id = #{parentId}
+  </update>
+  
+  <insert id="insertParentChild" keyProperty="id">
+  insert t_child_parent_map
+  (school_id,class_id,parent_id,child_id,relation_code,relation_name,is_default,create_time
+  ,creator_role,creator_id)
+  values
+  (#{schoolId},#{classId},#{parentId},#{childId},#{relationCode},#{relationName},#{isDefault},#{createTime}
+  ,#{creatorRole},#{creatorId})
+  </insert>
+  
+  <update id="updateChildClass">
+  update t_child_parent_map set 
+  class_id = #{classId}
+  ,child_id = #{childId}
+  </update>
+  
+  <select id="getParentById" resultType="ParentVo">
+  select <include refid="baseColumn"/>
+	FROM `t_parent` p 
+	WHERE p.`is_active`=1 AND p.id = #{id}
+  </select>
+  
+</mapper>

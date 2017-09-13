@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.DynamicCommentMapper" >
+
+
+	<select id="selectByDynamicId" resultMap="BaseResultMap">
+	 	select 
+       <include refid="Base_Column_List" /> 
+	    from 
+	    t_dynamic_comment t  
+	    where
+	    t.dynamic_id=#{dynamicId,jdbcType=BIGINT} 
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+  <resultMap id="BaseResultMap" type="cn.imexue.ec.common.model.DynamicComment" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="dynamic_id" property="dynamicId" jdbcType="BIGINT" />
+    <result column="user_id" property="userId" jdbcType="BIGINT" />
+    <result column="user_role" property="userRole" jdbcType="VARCHAR" />
+    <result column="user_logo_url" property="userLogoUrl" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="user_tag" property="userTag" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR"/>
+    <result column="target_user_id" property="targetUserId" jdbcType="BIGINT" />
+    <result column="target_user_role" property="targetUserRole" jdbcType="VARCHAR" />
+    <result column="target_user_name" property="targetUserName" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    </resultMap>
+    
+  <sql id="Base_Column_List" >
+    id, dynamic_id, user_id, user_role, user_logo_url, user_name, user_tag, content, 
+    target_user_id, target_user_role, target_user_name, create_time
+  </sql>
+
+</mapper>

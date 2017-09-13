@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.ProvinceMapper" >
+  <resultMap id="BaseResultMap" type="cn.imexue.ec.common.model.Province" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="sort_no" property="sortNo" jdbcType="INTEGER" />
+  </resultMap>
+  
+  
+  <select id="selectAll" resultType="cn.imexue.ec.common.model.vo.IdNameVO">
+  		select id,name from t_province
+  </select>
+  
+  <select id="selectAllOrderByName" resultType="cn.imexue.ec.common.model.vo.IdNameVO">
+  		select id,name from t_province  ORDER BY CONVERT( name USING gbk ) COLLATE gbk_chinese_ci ASC
+  </select>
+  
+</mapper>

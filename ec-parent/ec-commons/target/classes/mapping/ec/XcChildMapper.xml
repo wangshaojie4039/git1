@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.XcChildMapper" >
+   
+  <sql id="Base_Column_List" >
+    id, school_id, line_id, child_id, create_time, creator_role, creator_id, version_no
+  </sql>
+  
+  <sql id="page_Column_List" >
+   	xc.id, 	xc.child_id AS childId , xc.line_id,(SELECT line_name from t_xc_line xl where xl.id=xc.line_id and xl.is_delete=0) lineName, tch.`name`, tch.sex, tch.class_id as classId,(SELECT name from t_class where id=tch.class_id) as className
+  </sql>
+  <select id="getById" resultType="cn.imexue.ec.common.model.XcChild">
+    select 
+    <include refid="Base_Column_List" />
+    from t_xc_child
+    where id = #{id} 
+  </select>
+  
+  <!-- 校车幼儿查询 -->
+   <select id="pageLists" resultType="XcChildVo" >
+    select 
+    <include refid="page_Column_List" />
+    from t_xc_child xc
+	LEFT JOIN t_child tch ON tch.id = xc.child_id
+    where  1=1 
+    AND  xc.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND  tch.school_id = #{schoolId ,jdbcType=BIGINT}
+    and  tch.is_graduate =0 and tch.is_delete = 0
+     <if test="name != null">
+		AND tch.name like concat('%',#{name,jdbcType=VARCHAR},'%')
+	</if>
+    <if test="classId != null">
+		AND  tch.class_id = #{classId,jdbcType=BIGINT}
+	</if>
+	<if test="lineId != null">
+		AND  xc.line_id = #{lineId,jdbcType=BIGINT}
+	</if>
+	
+ 	ORDER BY ${orderBy} ${orderType}
+  </select>
+  
+  <!-- 查询乘车班级-幼儿对应 -->
+   <select id="queryChildByParam" resultType="XcChildItemVo" >
+    select 
+     xc.id,
+	GROUP_CONCAT(xc.child_id) childIds,
+	c.class_id,
+	xc.version_no
+    from t_xc_child xc
+	LEFT JOIN t_child c ON c.id = xc.child_id
+    where    xc.school_id = #{schoolId ,jdbcType=BIGINT}
+    <if test="lineId != null">
+		AND  xc.line_id = #{lineId,jdbcType=TINYINT}
+	</if>
+	 <if test="classId != null">
+		AND  c.class_id = #{classId,jdbcType=BIGINT}
+	</if>
+	
+	GROUP BY c.class_id
+   </select>
+   <!-- 所有已经乘车的幼儿 -->
+   <select id="queryChildBaseByParam" resultType="IdNameVO" >
+    select 
+    c.id,
+	c.NAME 
+    from t_xc_child xc
+	LEFT JOIN t_child c ON c.id = xc.child_id
+	LEFT JOIN t_xc_bus b ON b.line_id = xc.line_id
+    where  
+     xc.school_id = #{schoolId ,jdbcType=BIGINT}
+  	 AND c.school_id = #{schoolId ,jdbcType=BIGINT}
+  	 AND b.school_id = #{schoolId ,jdbcType=BIGINT}
+  	 AND b.`status`= 0
+    <if test="lineId != null">
+		AND  xc.line_id = #{lineId,jdbcType=TINYINT}
+	</if>
+	<if test="classId != null">
+		AND  c.class_id = #{classId,jdbcType=BIGINT}
+	</if>
+	<if test="busId != null">
+		AND  b.id = #{busId,jdbcType=BIGINT}
+	</if>
+    </select>
+   <!-- 查询校车幼儿 -->
+   <select id="findXcChildByParam" resultType="cn.imexue.ec.common.model.XcChild" >
+    select 
+     xc.id,
+	GROUP_CONCAT(xc.child_id) childIds,
+	c.class_id
+    from t_xc_child xc
+	LEFT JOIN t_child c ON c.id = xc.child_id
+    where    xc.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND c.is_delete = 0
+	AND c.is_graduate = 0
+    <if test="lineId != null">
+		AND  xc.line_id = #{lineId,jdbcType=BIGINT}
+	</if>
+	GROUP BY c.class_id
+   </select>
+   
+   <!-- 根据幼儿id获取校车幼儿 -->
+   <select id="findXcChildByChildId" resultType="cn.imexue.ec.common.model.XcChild" >
+    select 
+     <include refid="Base_Column_List" />
+    from t_xc_child xc
+    where    xc.school_id = #{schoolId ,jdbcType=BIGINT}
+     <if test="childId != null">
+		AND  xc.child_id = #{childId,jdbcType=BIGINT}
+	</if>
+    </select>
+   <!-- 获取该学校已经已经添加乘车的幼儿基本信息 -->
+   <select id="queryChildInfoByParam" resultType="XcChildInfoVo" >
+    select  DISTINCT xc.id, xc.child_id,c.name childName,xc.version_no
+     from t_xc_child xc
+	LEFT JOIN t_child c ON c.id = xc.child_id
+    where    xc.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND c.is_delete = 0
+	AND c.is_graduate = 0
+    <if test="classId != null">
+		AND  c.class_id = #{classId,jdbcType=BIGINT}
+	</if>
+    </select>
+   <!-- 该学校需要乘车的学生基本信息 -->
+   <select id="queryChildInfoNeedByParam" resultType="XcChildInfoVo" >
+    select  DISTINCT xc.id, xc.child_id,c.name childName,xc.version_no
+     from t_xc_child xc
+	LEFT JOIN t_child c ON c.id = xc.child_id
+    where    xc.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND c.is_delete = 0
+	AND c.is_graduate = 0
+    <if test="classId != null">
+		AND  c.class_id = #{classId,jdbcType=BIGINT}
+	</if>
+    </select>
+   
+   
+   <!-- 获取学校要乘车的幼儿班级信息 (所有已存在)-->
+   <select id="queryClassBySchoolId" resultType="ClassRideVoItem" >
+    SELECT tc.id classId, tc.`name` className,  count(c.id)  AS classChildTotal
+	FROM t_class tc
+	LEFT JOIN t_child c ON c.class_id = tc.id
+    where    
+    tc.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND c.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND tc.is_delete = 0
+	AND tc.is_graduate = 0
+	AND c.is_graduate = 0
+	AND c.is_delete = 0
+	GROUP BY tc.id
+   </select>
+   <!-- 获取校车幼儿 Id-->
+   <select id="findXcChildIdByParam" resultType="long" >
+    select    xc.id  from t_xc_child xc
+	LEFT JOIN t_child c ON c.id = xc.child_id
+    where    xc.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND c.school_id = #{schoolId ,jdbcType=BIGINT}
+    AND c.is_delete = 0
+	AND c.is_graduate = 0
+    <if test="classId != null">
+		AND  c.class_id = #{classId,jdbcType=BIGINT}
+	</if>
+	<if test="lineId != null">
+		AND  xc.line_id = #{lineId,jdbcType=BIGINT}
+	</if>
+    </select>
+  <insert id="insert" parameterType="cn.imexue.ec.common.model.XcChild" >
+    insert into t_xc_child
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="schoolId != null" >
+        school_id,
+      </if>
+      <if test="lineId != null" >
+        line_id,
+      </if>
+      <if test="childId != null" >
+        child_id,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="creatorRole != null" >
+        creator_role,
+      </if>
+      <if test="creatorId != null" >
+        creator_id,
+      </if>
+      <if test="versionNo != null" >
+        version_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="schoolId != null" >
+        #{schoolId,jdbcType=BIGINT},
+      </if>
+      <if test="lineId != null" >
+        #{lineId,jdbcType=BIGINT},
+      </if>
+      <if test="childId != null" >
+        #{childId,jdbcType=BIGINT},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="creatorRole != null" >
+        #{creatorRole,jdbcType=VARCHAR},
+      </if>
+      <if test="creatorId != null" >
+        #{creatorId,jdbcType=BIGINT},
+      </if>
+      <if test="versionNo != null" >
+        #{versionNo,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <!-- 批量插入 -->
+  <insert id="batchInsert" useGeneratedKeys="true" parameterType="map">  
+    <selectKey resultType="long" keyProperty="id" order="AFTER">  
+        SELECT  
+        LAST_INSERT_ID()  
+    </selectKey>  
+    insert into t_xc_child (school_id,line_id,child_id, create_time, creator_role, creator_id)   
+    values  
+    <foreach collection="list" item="item" index="index" separator="," >  
+        (#{item.schoolId},#{item.lineId},#{item.childId}, #{ createTime,jdbcType=TIMESTAMP}, #{ CreatorRole,jdbcType=VARCHAR}, #{ creatorId,jdbcType=BIGINT})  
+    </foreach>  
+</insert> 
+  
+  
+  <update id="update" parameterType="cn.imexue.ec.common.model.XcChild" >
+    update t_xc_child
+    <set >
+      <if test="schoolId != null" >
+        school_id = #{schoolId,jdbcType=BIGINT},
+      </if>
+      <if test="lineId != null" >
+        line_id = #{lineId,jdbcType=BIGINT},
+      </if>
+      <if test="childId != null" >
+        child_id = #{childId,jdbcType=BIGINT},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="creatorRole != null" >
+        creator_role = #{creatorRole,jdbcType=VARCHAR},
+      </if>
+      <if test="creatorId != null" >
+        creator_id = #{creatorId,jdbcType=BIGINT},
+      </if>
+         version_no = version_no+1
+     </set>
+    where id = #{id,jdbcType=BIGINT} and version_no = #{versionNo}
+  </update>
+  
+  <!--批量更新  -->
+  <update id="batchUpdate"   parameterType="java.util.List">
+  	<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+	    update t_xc_child
+	    <set >
+       		line_id = #{item.lineId,jdbcType=INTEGER},
+ 	      <if test="createTime != null" >
+	        create_time = #{createTime,jdbcType=TIMESTAMP},
+	      </if>
+	      <if test="creatorRole != null" >
+	        creator_role = #{creatorRole,jdbcType=VARCHAR},
+	      </if>
+	      <if test="creatorId != null" >
+	        creator_id = #{creatorId,jdbcType=BIGINT},
+	      </if>
+	         version_no =version_no+1
+	     </set>
+	      where id=#{item.id,jdbcType=INTEGER}  and version_no = #{item.versionNo}
+    </foreach>   
+   </update>
+  <delete id="deleteById">
+	  delete from t_xc_child
+	  where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <!-- 根据班级和线路删除乘车幼儿 -->
+  <delete id="deletByParam" parameterType="map">
+	 DELETE FROM t_xc_child WHERE  id IN 
+	<foreach collection="list" item="item"  index="index" separator="," open="("  close=")" >
+		#{item,jdbcType=BIGINT}
+ 	</foreach>  
+  </delete>
+  
+  <delete id="deleteXcChild">
+  delete from t_xc_child where child_id =#{xcChildId}
+  </delete>
+  
+</mapper>

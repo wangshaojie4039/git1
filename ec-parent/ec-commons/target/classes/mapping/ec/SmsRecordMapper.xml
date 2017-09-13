@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.SmsRecordMapper" >
+
+  <insert id="insert">
+    insert into t_sms_record (id, template_type, send_port, 
+      mobile, sms_type, msg, 
+      result, sid, fee, create_time, 
+      creator_role, creator_id)
+    values (#{id,jdbcType=BIGINT}, #{templateType,jdbcType=INTEGER}, #{sendPort,jdbcType=VARCHAR}, 
+      #{mobile,jdbcType=VARCHAR}, #{smsType,jdbcType=TINYINT}, #{msg,jdbcType=VARCHAR}, 
+      #{result,jdbcType=INTEGER}, #{sid,jdbcType=VARCHAR}, #{fee,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{creatorRole,jdbcType=VARCHAR}, #{creatorId,jdbcType=BIGINT})
+  </insert>
+
+</mapper>

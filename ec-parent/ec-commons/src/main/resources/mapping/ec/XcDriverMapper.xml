@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.XcDriverMapper" >
+
+  <sql id="Base_Column_List" >
+    id, school_id, driver_name, id_no, license_no, driver_tel, attendance_card_no, is_delete, 
+    create_time, creator_role, creator_id, update_time, updater_role, updater_id, version_no
+  </sql>
+  <select id="pageList" resultType="cn.imexue.ec.common.model.XcDriver">
+	select
+	 <include refid="Base_Column_List" />
+	from t_xc_driver
+	where is_delete=0 and  school_id=#{schoolId}
+	<if test="driverName!=null and driverName!=''">
+		and driver_name like concat('%',#{driverName},'%')
+	</if>
+	<if test="driverTel!=null and driverTel!=''">
+		and driver_tel like concat('%',#{driverTel},'%')
+	</if>
+	<if test="orderBy!=null and orderBy!='' ">
+		ORDER BY ${orderBy} ${orderType}
+	</if>
+  </select>
+  
+  <select id="selectByLicenseNo" parameterType="java.lang.String" resultType="cn.imexue.ec.common.model.XcDriver">
+  	 select 
+    <include refid="Base_Column_List" />
+    from t_xc_driver
+    where is_delete=0 and license_no = #{licenseNo}
+  </select>
+  
+  <select id="selectByIdNo" parameterType="java.lang.String" resultType="cn.imexue.ec.common.model.XcDriver">
+  	 select 
+    <include refid="Base_Column_List" />
+    from t_xc_driver
+    where is_delete=0 and id_no = #{idNo}
+  </select>
+  
+  
+  <select id="getById"  parameterType="java.lang.Long"  resultType="cn.imexue.ec.common.model.XcDriver" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_xc_driver
+    where is_delete=0 and id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id"  parameterType="cn.imexue.ec.common.model.XcDriver" >
+    insert into t_xc_driver
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="schoolId != null" >
+        school_id,
+      </if>
+      <if test="driverName != null" >
+        driver_name,
+      </if>
+      <if test="idNo != null" >
+        id_no,
+      </if>
+      <if test="licenseNo != null" >
+        license_no,
+      </if>
+      <if test="driverTel != null" >
+        driver_tel,
+      </if>
+      <if test="attendanceCardNo != null" >
+        attendance_card_no,
+      </if>
+      <if test="isDelete != null" >
+        is_delete,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="creatorRole != null" >
+        creator_role,
+      </if>
+      <if test="creatorId != null" >
+        creator_id,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="updaterRole != null" >
+        updater_role,
+      </if>
+      <if test="updaterId != null" >
+        updater_id,
+      </if>
+      <if test="versionNo != null" >
+        version_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="schoolId != null" >
+        #{schoolId,jdbcType=BIGINT},
+      </if>
+      <if test="driverName != null" >
+        #{driverName,jdbcType=VARCHAR},
+      </if>
+      <if test="idNo != null" >
+        #{idNo,jdbcType=VARCHAR},
+      </if>
+      <if test="licenseNo != null" >
+        #{licenseNo,jdbcType=VARCHAR},
+      </if>
+      <if test="driverTel != null" >
+        #{driverTel,jdbcType=VARCHAR},
+      </if>
+      <if test="attendanceCardNo != null" >
+        #{attendanceCardNo,jdbcType=VARCHAR},
+      </if>
+      <if test="isDelete != null" >
+        #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="creatorRole != null" >
+        #{creatorRole,jdbcType=VARCHAR},
+      </if>
+      <if test="creatorId != null" >
+        #{creatorId,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updaterRole != null" >
+        #{updaterRole,jdbcType=VARCHAR},
+      </if>
+      <if test="updaterId != null" >
+        #{updaterId,jdbcType=BIGINT},
+      </if>
+      <if test="versionNo != null" >
+        #{versionNo,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="update" parameterType="cn.imexue.ec.common.model.XcDriver" >
+    update t_xc_driver
+    <set >
+      <if test="schoolId != null" >
+        school_id = #{schoolId,jdbcType=BIGINT},
+      </if>
+      <if test="driverName != null" >
+        driver_name = #{driverName,jdbcType=VARCHAR},
+      </if>
+      <if test="idNo != null" >
+        id_no = #{idNo,jdbcType=VARCHAR},
+      </if>
+      <if test="licenseNo != null" >
+        license_no = #{licenseNo,jdbcType=VARCHAR},
+      </if>
+      <if test="driverTel != null" >
+        driver_tel = #{driverTel,jdbcType=VARCHAR},
+      </if>
+      <if test="attendanceCardNo != null" >
+        attendance_card_no = #{attendanceCardNo,jdbcType=VARCHAR},
+      </if>
+      <if test="isDelete != null" >
+        is_delete = #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="creatorRole != null" >
+        creator_role = #{creatorRole,jdbcType=VARCHAR},
+      </if>
+      <if test="creatorId != null" >
+        creator_id = #{creatorId,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updaterRole != null" >
+        updater_role = #{updaterRole,jdbcType=VARCHAR},
+      </if>
+      <if test="updaterId != null" >
+        updater_id = #{updaterId,jdbcType=BIGINT},
+      </if>
+        version_no = version_no+1
+     </set>
+    where id = #{id,jdbcType=BIGINT}  and version_no = #{versionNo}
+  </update>
+</mapper>

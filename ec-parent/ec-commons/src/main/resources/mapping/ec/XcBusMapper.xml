@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.XcBusMapper" >
+  <resultMap id="BaseResultMap" type="cn.imexue.ec.common.model.XcBus" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="school_id" property="schoolId" jdbcType="BIGINT" />
+    <result column="line_id" property="lineId" jdbcType="BIGINT" />
+    <result column="model" property="model" jdbcType="VARCHAR" />
+    <result column="plate_number" property="plateNumber" jdbcType="VARCHAR" />
+    <result column="nuclear_seating" property="nuclearSeating" jdbcType="INTEGER" />
+    <result column="attendance_device_no" property="attendanceDeviceNo" jdbcType="VARCHAR" />
+    <result column="camera_device_no" property="cameraDeviceNo" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="TINYINT" />
+    <result column="is_delete" property="isDelete" jdbcType="TINYINT" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="creator_role" property="creatorRole" jdbcType="VARCHAR" />
+    <result column="creator_id" property="creatorId" jdbcType="BIGINT" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="updater_role" property="updaterRole" jdbcType="VARCHAR" />
+    <result column="updater_id" property="updaterId" jdbcType="BIGINT" />
+    <result column="version_no" property="versionNo" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, school_id,line_id, model, plate_number, nuclear_seating, attendance_device_no, camera_device_no, 
+    status, is_delete, create_time, creator_role, creator_id, update_time, updater_role, 
+    updater_id, version_no
+  </sql>
+  
+  <sql id="page_Column_List" >
+    id, school_id,line_id,(select line_name from t_xc_line where id=xb.line_id and is_delete=0) lineName, model, plate_number, nuclear_seating, (
+		SELECT
+			device_no
+		FROM
+			t_device_attendance da
+		WHERE
+			da.device_no = xb.attendance_device_no and da.is_active=1 and da.school_id=#{schoolId ,jdbcType=BIGINT}
+	) attendance_device_no,(select name from t_device_attendance da where da.device_no=xb.attendance_device_no and da.is_active=1 and da.school_id=#{schoolId ,jdbcType=BIGINT})   attendanceDeviceName   , camera_device_no, 
+    status ,version_no
+  </sql>
+  
+  <!-- 校车查询 -->
+  <select id="pageLists" resultType="XcBusVo" >
+    select 
+    <include refid="page_Column_List" />
+    from t_xc_bus  xb
+    where  is_delete=0
+    <if test="schoolId != null">
+		AND  xb.school_id = #{schoolId ,jdbcType=BIGINT}
+	</if>
+    <if test="plateNumber != null">
+		AND  xb.plate_number like concat('%',#{plateNumber,jdbcType=VARCHAR},'%')
+	</if>
+    <if test="status != null">
+		AND  xb.status = #{status,jdbcType=TINYINT}
+	</if>
+ 	GROUP BY xb.id
+	ORDER BY ${orderBy} ${orderType}
+  </select>
+  
+  <select id="getById" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_xc_bus
+    where id = #{id,jdbcType=BIGINT} and is_delete=0
+  </select>
+  
+  <!-- 查询该车牌号的车 -->
+  <select id="getByPlateNumber" resultMap="BaseResultMap"  >
+    select 
+    <include refid="Base_Column_List" />
+    from t_xc_bus
+    where plate_number = #{plateNumber,jdbcType=VARCHAR} and is_delete=0
+  </select>
+  <!--  查询该考勤机的车  -->
+  <select id="getByBusAttendence" resultMap="BaseResultMap"  >
+    select 
+    <include refid="Base_Column_List" />
+    from t_xc_bus
+    where attendance_device_no = #{attendanceDeviceNo,jdbcType=VARCHAR} and is_delete=0
+  </select>
+  <!-- 查询所有校车学校 -->
+   <select id="queryAllXcBus" resultType="XcBusVo" >
+    select 
+    <include refid="page_Column_List" />
+    from t_xc_bus  xb
+    where  is_delete=0 AND  xb.school_id = #{schoolId ,jdbcType=BIGINT}
+    <if test="status != null">
+		AND  xb.status = #{status,jdbcType=TINYINT}
+	</if>
+	<if test="lineId != null">
+		AND  xb.line_id = #{lineId,jdbcType=BIGINT}
+	</if>
+ 	ORDER BY id DESC
+  </select>
+  
+    
+  <!-- 查询学校的闲置车辆 -->
+   <select id="queryFreeXcBus" resultType="XcBusVo" >
+    select 
+    <include refid="page_Column_List" />
+    from t_xc_bus  xb
+    where  is_delete=0 AND  xb.school_id = #{schoolId ,jdbcType=BIGINT}
+	AND  (xb.line_id =0 or xb.line_id is null)
+ 	ORDER BY id DESC
+  </select>
+  
+  <!-- 根据条件查询校车 -->
+  <select id="queryXcBusByParam" resultType="cn.imexue.ec.common.model.XcBus" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_xc_bus  xb
+    where  xb.is_delete=0 AND  xb.school_id = #{schoolId ,jdbcType=BIGINT}
+    <if test="status != null">
+		AND  xb.status = #{status,jdbcType=TINYINT}
+	</if>
+	<if test="lineId != null">
+		AND  xb.line_id = #{lineId,jdbcType=BIGINT}
+	</if>
+ 	ORDER BY id DESC
+  </select>
+  
+  
+  <insert id="insert" parameterType="cn.imexue.ec.common.model.XcBus" useGeneratedKeys="true" keyProperty="id">
+  	<selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+          SELECT LAST_INSERT_ID()
+     </selectKey>
+    insert into t_xc_bus
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="schoolId != null" >
+        school_id,
+      </if>
+      <if test="lineId != null" >
+        line_id,
+      </if>
+      <if test="model != null" >
+        model,
+      </if>
+      <if test="plateNumber != null" >
+        plate_number,
+      </if>
+      <if test="nuclearSeating != null" >
+        nuclear_seating,
+      </if>
+      <if test="attendanceDeviceNo != null" >
+        attendance_device_no,
+      </if>
+      <if test="cameraDeviceNo != null" >
+        camera_device_no,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="isDelete != null" >
+        is_delete,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="creatorRole != null" >
+        creator_role,
+      </if>
+      <if test="creatorId != null" >
+        creator_id,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="updaterRole != null" >
+        updater_role,
+      </if>
+      <if test="updaterId != null" >
+        updater_id,
+      </if>
+      <if test="versionNo != null" >
+        version_no,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="schoolId != null" >
+        #{schoolId,jdbcType=BIGINT},
+      </if>
+      <if test="lineId != null" >
+        #{lineId,jdbcType=BIGINT},
+      </if>
+      <if test="model != null" >
+        #{model,jdbcType=VARCHAR},
+      </if>
+      <if test="plateNumber != null" >
+        #{plateNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="nuclearSeating != null" >
+        #{nuclearSeating,jdbcType=INTEGER},
+      </if>
+      <if test="attendanceDeviceNo != null" >
+        #{attendanceDeviceNo,jdbcType=VARCHAR},
+      </if>
+      <if test="cameraDeviceNo != null" >
+        #{cameraDeviceNo,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="isDelete != null" >
+        #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="creatorRole != null" >
+        #{creatorRole,jdbcType=VARCHAR},
+      </if>
+      <if test="creatorId != null" >
+        #{creatorId,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updaterRole != null" >
+        #{updaterRole,jdbcType=VARCHAR},
+      </if>
+      <if test="updaterId != null" >
+        #{updaterId,jdbcType=BIGINT},
+      </if>
+      <if test="versionNo != null" >
+        #{versionNo,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="update" parameterType="cn.imexue.ec.common.model.XcBus" >
+    update t_xc_bus
+    <set >
+      <if test="schoolId != null" >
+        school_id = #{schoolId,jdbcType=BIGINT},
+      </if>
+      <if test="lineId != null" >
+        line_id=#{lineId,jdbcType=BIGINT},
+      </if>
+      <if test="model != null" >
+        model = #{model,jdbcType=VARCHAR},
+      </if>
+      <if test="plateNumber != null" >
+        plate_number = #{plateNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="nuclearSeating != null" >
+        nuclear_seating = #{nuclearSeating,jdbcType=INTEGER},
+      </if>
+      <if test="attendanceDeviceNo != null" >
+        attendance_device_no = #{attendanceDeviceNo,jdbcType=VARCHAR},
+      </if>
+      <if test="cameraDeviceNo != null" >
+        camera_device_no = #{cameraDeviceNo,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="isDelete != null" >
+        is_delete = #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="creatorRole != null" >
+        creator_role = #{creatorRole,jdbcType=VARCHAR},
+      </if>
+      <if test="creatorId != null" >
+        creator_id = #{creatorId,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updaterRole != null" >
+        updater_role = #{updaterRole,jdbcType=VARCHAR},
+      </if>
+      <if test="updaterId != null" >
+        updater_id = #{updaterId,jdbcType=BIGINT},
+      </if>
+         version_no = version_no+1
+     </set>
+    where id = #{id,jdbcType=BIGINT} and version_no = #{versionNo}
+  </update>
+</mapper>

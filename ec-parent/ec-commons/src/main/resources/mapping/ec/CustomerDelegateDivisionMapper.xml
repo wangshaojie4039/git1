@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.CustomerDelegateDivisionMapper">
+	<resultMap id="BaseResultMap"
+		type="cn.imexue.ec.common.model.CustomerDelegateDivision">
+		<id column="id" property="id" jdbcType="BIGINT" />
+		<result column="customer_id" property="customerId" jdbcType="BIGINT" />
+		<result column="province_id" property="provinceId" jdbcType="BIGINT" />
+		<result column="city_id" property="cityId" jdbcType="BIGINT" />
+		<result column="district_id" property="districtId" jdbcType="BIGINT" />
+		<result column="delegate_level" property="delegateLevel"
+			jdbcType="TINYINT" />
+		<result column="is_active" property="isActive" jdbcType="TINYINT" />
+		<result column="is_delete" property="isDelete" jdbcType="TINYINT" />
+		<result column="delete_time" property="deleteTime" jdbcType="TIMESTAMP" />
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="creator_role" property="creatorRole" jdbcType="VARCHAR" />
+		<result column="creator_id" property="creatorId" jdbcType="BIGINT" />
+		<result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+		<result column="updater_role" property="updaterRole" jdbcType="VARCHAR" />
+		<result column="updater_id" property="updaterId" jdbcType="BIGINT" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, customer_id, province_id, city_id, district_id, delegate_level,
+		is_active, is_delete,
+		delete_time, create_time, creator_role, creator_id, update_time, updater_role,
+		updater_id
+	</sql>
+	<select id="selectCustomerDelegateInfo" resultMap="BaseResultMap">
+		SELECT
+		customer_id AS customerId,
+		delegate_level AS delegateLevel
+		FROM
+		t_customer_delegate_division
+		WHERE province_id = #{0}
+		AND city_id = #{1}
+		AND district_id = #{2}
+		AND is_delete = 0
+	</select>
+
+
+	<select id="selectByCustomerId" resultMap="BaseResultMap"
+		parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from t_customer_delegate_division
+		where customer_id = #{customerId,jdbcType=BIGINT}
+		and is_delete=0
+	</select>
+	<!-- 获取代理顶级代理区域 -->
+	<select id="selectTopByCustomerId" resultMap="BaseResultMap"
+		parameterType="java.lang.Long">
+		select
+		<include refid="Base_Column_List" />
+		from t_customer_delegate_division
+		where customer_id = #{customerId,jdbcType=BIGINT} and is_delete=0
+		order by
+		district_id,city_id,province_id
+	</select>
+
+
+	<select id="selectPcdIdsByCustomerId" parameterType="java.lang.Long"
+		resultType="cn.imexue.ec.common.model.bo.PcdBO">
+		select province_id as provinceId,city_id as
+		cityId,district_id as districtId from t_customer_delegate_division
+		where customer_id=#{customerId,jdbcType=BIGINT}
+		and is_delete=0
+		order by
+		province_id,city_id,district_id
+	</select>
+
+	<!-- 根据customerId获取代理商下的学校数目 -->
+	<select id="selectSchoolNUmByCustomerId" resultType="java.lang.Integer"
+		parameterType="java.lang.Long">
+		SELECT
+		count(ts.id)
+		FROM t_school ts
+		LEFT JOIN t_customer_delegate_division tcdd
+		ON (ts.province_id = tcdd.province_id and (tcdd.city_id=0 or ts.city_id
+		= tcdd.city_id)
+		and (tcdd.district_id=0 or ts.district_id = tcdd.district_id) and
+		tcdd.is_delete=0)
+		WHERE tcdd.customer_id =
+		#{customerId,jdbcType=BIGINT}
+	</select>
+	<!-- 根据地区Id搜索信息 -->
+	<select id="selectCustomerInfo" resultMap="BaseResultMap">
+		SELECT *
+		FROM t_customer_delegate_division
+
+		WHERE province_id = #{provinceId,jdbcType=BIGINT}
+		<if test="cityId !=null">
+			AND ( city_id = #{cityId,jdbcType=BIGINT})
+		</if>
+		<if test="districtId !=null">
+			AND ( district_id = #{districtId,jdbcType=BIGINT})
+		</if>
+		and is_delete=0 and is_active=1
+	</select>
+	<!-- 根据地区Id搜索信息(包括未激活) -->
+	<select id="selectCustomerInfomation" resultMap="BaseResultMap">
+		SELECT *
+		FROM t_customer_delegate_division
+
+		WHERE province_id = #{provinceId,jdbcType=BIGINT}
+		<if test="cityId !=null">
+			AND ( city_id = #{cityId,jdbcType=BIGINT})
+		</if>
+		<if test="districtId !=null">
+			AND ( district_id = #{districtId,jdbcType=BIGINT})
+		</if>
+		and is_delete=0
+	</select>
+
+	<delete id="deleteByCustomerId" parameterType="java.lang.Long">
+		delete from
+		t_customer_delegate_division
+		where customer_id = #{customerId,jdbcType=BIGINT}
+	</delete>
+</mapper>

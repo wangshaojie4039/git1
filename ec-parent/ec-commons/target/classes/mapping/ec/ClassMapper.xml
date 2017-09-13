@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.ClassMapper" >
+  
+  <sql id="baseColumn">
+  	s.id,s.school_id,s.name,s.school_year,s.master_teacher_id,s.last_promote_time,s.version_no
+  </sql>
+  
+  <select id="pageList" resultType="classvo">
+  	select <include refid="baseColumn"/>,IFNULL(childNum,0) childNum ,IFNULL(parentNum,0) parentNum
+  	,t.id `master.id`,t.name `master.name` , t.mobile `master.mobile`
+  	FROM t_class s
+  	left join t_class_teacher_map ctm on s.id = ctm.class_id and ctm.is_master=1
+  	left join t_teacher t on t.id = ctm.teacher_id
+  	left join (
+  	select count(*) childNum,class_id from t_child 
+  	where is_delete = 0 and is_graduate = 0
+  	and school_id = #{schoolId} group by class_id 
+  	) c on c.class_id = s.id
+  	left join (
+  	SELECT COUNT(distinct cpm.parent_id) parentNum,cpm.class_id FROM t_child_parent_map cpm
+  	JOIN t_child tc ON tc.id = cpm.`child_id` 
+  	WHERE tc.is_delete = 0 AND tc.is_graduate = 0
+  	and cpm.school_id = #{schoolId} GROUP BY cpm.class_id 
+  	) p on p.class_id = s.id
+  	<if test="teacherId != null">
+  	left join t_class_teacher_map ctmm on s.id = ctmm.class_id 
+  	</if>
+  	WHERE s.is_graduate = 0 and s.is_delete = 0
+  	and s.school_id = #{schoolId}
+  	<if test="teacherId != null">
+  	and ctmm.teacher_id = #{teacherId}
+  	</if>
+  	GROUP BY s.id
+  	<if test="orderBy != null">
+  	<if test="orderBy != 'masterName'">
+  	ORDER BY s.${orderBy} ${orderType}
+  	</if>
+  	<if test="orderBy == 'masterName'">
+  	ORDER BY t.name ${orderType}
+  	</if>
+  	</if>
+  </select>
+  
+  <select id="getClassByTeacher" resultType="classvo">
+  	select <include refid="baseColumn"/>,ctm.is_master
+  	from `t_class` s
+  	left join `t_class_teacher_map` ctm on ctm.class_id = s.id
+  	where ctm.teacher_id = #{teacherId}
+  	and s.is_graduate=0 and s.is_delete=0
+  </select>
+  
+  <select id="getClassBySchoolId" resultType="classvo">
+  	select <include refid="baseColumn"/>
+  	from `t_class` s
+  	where  1=1 AND s.is_graduate = 0 
+	AND s.is_delete = 0 and 
+  	s.school_id = #{schoolId} 
+  </select>
+  
+  <!-- 根据schoolID获取班级基本信息 -->
+  <select id="findAllBySchoolId" resultType="ClassInfoVo">
+  	select DISTINCT s.id,s.name
+  	from `t_class` s
+  	LEFT JOIN t_class_teacher_map ctm ON ctm.class_id=s.id
+  	where s.school_id = #{schoolId}
+  		and (ctm.school_id = #{schoolId} or ctm.school_id is null)
+  		and s.is_graduate=0
+  	    and s.is_delete=0
+	<if test="teacherId != null">
+ 		 and ctm.teacher_id = #{teacherId}
+	</if>
+  </select>
+  <select id="getById" resultType="classvo">
+  select <include refid="baseColumn"/>
+  from `t_class` s
+  where s.id = #{id} and s.is_graduate=0
+  and s.is_delete=0
+  </select>
+  
+  <select id="getByName" resultType="classvo">
+  select <include refid="baseColumn"/>
+  from `t_class` s
+  where s.name = #{name} and s.is_graduate=0
+  and s.is_delete=0 and school_id = #{schoolId}
+  <if test="id != null">
+  and id != #{id}
+  </if>
+  limit 1
+  </select>
+  
+  <update id="updateClass">
+  update t_class 
+  <set>
+  version_no = version_no+1
+  <if test="name != null">
+  ,name = #{name}
+  </if>
+  <if test="masterTeacherId != null">
+	  <if test="masterTeacherId == 0">
+	  ,master_teacher_id = null
+	  </if>
+	  <if test="masterTeacherId != 0">
+	  ,master_teacher_id = #{masterTeacherId}
+	  </if>
+  </if>  
+  <if test="lastPromoteTime != null">
+  ,last_promote_time = now()
+  </if>
+  <if test="isGraduate != null">
+  ,is_graduate = 1
+  ,graduate_time = NOW()
+  </if>
+  <if test="isDelete != null">
+  ,is_delete = 1
+  ,delete_time = NOW()
+  </if>
+  </set>
+  where id=#{id} 
+  and version_no = #{versionNo}
+  and school_id = #{schoolId}
+  </update>
+  
+  <insert id="insertClass" keyProperty="id">
+  insert into t_class (school_id,name,school_year,master_teacher_id,is_graduate,is_delete
+  ,create_time,creator_role,creator_id)
+  values
+  (#{schoolId},#{name},#{schoolYear},#{masterTeacherId},0,0,
+  #{createTime},#{creatorRole},#{creatorId})
+  </insert>
+  
+  <delete id="deleteTeacherClassMap">
+  delete from t_class_teacher_map 
+  where 1=1
+  <if test="classId != null">
+  and class_id = #{classId}
+  </if>
+  <if test="teacherId != null">
+  and teacher_id = #{teacherId}
+  </if>
+  <if test="master != null">
+  and is_master != 1
+  </if>
+  </delete>
+  
+  <insert id="insertTeacherClassMap">
+  insert into t_class_teacher_map
+  (school_id,class_id,teacher_id,is_master,create_time,creator_role,creator_id)
+  values
+  <foreach collection="list" item="t" separator=",">
+  (#{t.schoolId},#{t.classId},#{t.teacherId},#{t.isMaster},#{t.createTime},#{t.creatorRole}
+  ,#{t.creatorId} )
+  </foreach>
+  </insert>
+  
+  <select id="selectClassIdsByTeacherIdInSchool" parameterType="map" resultType="java.lang.Long">
+  	select ctp.class_id from t_class_teacher_map ctp left join t_class c
+  	on ctp.class_id=c.id
+  	where c.is_delete=0 and  c.is_graduate=0 and  ctp.teacher_id=#{teacherId} and ctp.school_id=#{schoolId}
+  </select>
+  
+  <update id="deleteMasterId">
+  update t_class set master_teacher_id = null
+  where master_teacher_id = #{masterTeacherId}
+  </update>
+  
+</mapper>

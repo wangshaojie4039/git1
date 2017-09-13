@@ -1,0 +1,25 @@
+<configuration >
+
+<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">   
+    <!-- encoder 默认配置为PatternLayoutEncoder -->   
+    <encoder>   
+      <pattern>%d{HH:mm:ss} %msg %X{user}-%X{rand} [%thread] %-5level %logger{24} %n</pattern>   
+    </encoder>   
+ </appender>
+<appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+	<queueSize>512</queueSize>
+ 	<appender-ref ref ="STDOUT"/>  
+</appender>
+<root level="DEBUG">
+	<appender-ref ref="ASYNC"/>  
+</root>  
+<logger name="org" level="INFO"/>
+<logger name="springfox.documentation" level="WARN"/>
+<logger name="com.netflix" level="WARN"/>
+<logger name="cn.imexue.ec" level="DEBUG"/>
+<logger name="sql" level="DEBUG"/>
+<logger name="druid.sql" level="INFO"/>
+<logger name="com.alibaba.druid" level="WARN"/>
+<logger name="access" level="INFO"/>
+<logger name="service" level="INFO"/>
+</configuration>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.imexue.ec.common.mapper.ec.SchoolMapper" >
+  
+  <sql id="baseColumn">
+  	s.id,s.name,s.address,s.linkman,s.tel,s.logo_url
+  	,s.is_active,s.version_no,s.recipe_types
+  </sql>
+  
+  <select id="getSchoolById" resultType="schoolvo">
+  	select <include refid="baseColumn"/>
+  	,concat(p.name,' ',c.name,' ',d.name) areaName, 
+  	<if test="cdd != null">
+  	cu.`name` customerName,cu.`tel` customerTel
+  	</if>
+  	<if test="cdd == null">
+  	'-'  customerName,'-' customerTel
+  	</if>
+  	FROM t_school s 
+  	LEFT JOIN t_province p ON s.province_id = p.id
+  	LEFT JOIN t_city c ON s.city_id = c.id
+  	LEFT JOIN t_district d ON s.district_id = d.id
+  	<if test="cdd != null">
+  	LEFT JOIN t_customer_delegate_division cdd
+	ON (s.province_id=cdd.province_id AND cdd.city_id=0 AND cdd.district_id=0)
+	OR  (s.province_id=cdd.province_id AND s.city_id=cdd.city_id AND cdd.district_id=0)
+	OR  (s.province_id=cdd.province_id AND s.city_id=cdd.city_id AND cdd.district_id=s.district_id)
+	LEFT JOIN `t_customer` cu ON  cu.`id`=cdd.`customer_id`
+  	</if>
+  	WHERE s.id = #{schoolId} 
+  	<if test="cdd != null">
+  	AND cdd.is_active=1 AND cdd.is_delete=0
+  	ORDER BY cdd.delegate_level DESC LIMIT 1
+  	</if>
+  </select>
+  <!-- 获取学校原子方法getById -->
+  <select id="getById" resultType="school">
+  	select <include refid="baseColumn"/>
+  	FROM t_school s 
+  	WHERE s.id = #{id}
+  </select>
+  <update id="updateSchool">
+  update t_school set 
+  address = #{address}
+  ,linkman = #{linkman}
+  ,tel = #{tel}
+  ,update_time = #{updateTime}
+  ,updater_role = #{updaterRole}
+  ,updater_id = #{updaterId}
+  ,version_no = version_no+1
+  where id = #{id}
+  and version_no = #{versionNo}
+  </update>
+  
+  <update id="updateSchoolSetting">
+	  update t_school set 
+	  recipe_types = #{recipeTypes}
+	  ,version_no = version_no+1
+	  where id = #{id}
+	  and version_no = #{versionNo}
+  </update>
+  
+  <select id="getTeacherNum" resultType="int">
+  select count(DISTINCT t.id) from t_teacher t
+  left join t_teacher_school_map s on t.id = s.teacher_id
+  where s.school_id = #{schoolId}
+  </select>
+  
+  <select id="getParentNum" resultType="int">
+  select count(DISTINCT p.id) from t_parent p
+  left join t_child_parent_map cp on p.id = cp.parent_id
+  left join t_child t on t.id = cp.child_id
+  where cp.school_id = #{schoolId}
+  and p.is_active =1 and t.is_graduate=0 and t.is_delete = 0
+  </select>
+  
+  <select id="getChildrenNum" resultType="int">
+  select count(DISTINCT p.id) from t_child p
+  where p.school_id = #{schoolId}
+  and p.is_delete = 0 and is_graduate = 0
+  </select>
+  
+</mapper>
